@@ -66,13 +66,13 @@ func InitGetTraces() []api.ServerTool {
 				IdempotentHint:  ptr.To(true),
 				OpenWorldHint:   ptr.To(true),
 			},
-		}, Handler: TracesHandler,
+		}, Handler: tracesHandler,
 	})
 
 	return ret
 }
 
-func TracesHandler(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
+func tracesHandler(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
 	kiali := kialiclient.NewKiali(params, params.RESTConfig())
 	arguments := params.GetArguments()
 	content, err := kiali.ExecuteRequest(params.Context, KialiGetTracesEndpoint, arguments)

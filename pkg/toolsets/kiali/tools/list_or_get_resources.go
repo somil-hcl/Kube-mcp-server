@@ -39,7 +39,7 @@ func InitListOrGetResources() []api.ServerTool {
 						Description: "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig",
 					},
 				},
-				Required: []string{"resource_type"},
+				Required: []string{"resourceType"},
 				DependentRequired: map[string][]string{
 					"resourceName": {"namespaces"},
 				},

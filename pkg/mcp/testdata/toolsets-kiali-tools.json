@@ -190,9 +190,9 @@
         }
       },
       "required": [
-        "resource_type",
+        "resourceType",
         "namespace",
-        "resource_name"
+        "resourceName"
       ],
       "type": "object"
     },
@@ -241,8 +241,55 @@
       ],
       "type": "object"
     },
-    "name": "kiali_get_resource_details",
+    "name": "kiali_get_pod_performance",
     "title": "Get Pod Performance"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+      "title": "List or Resource Details"
+    },
+    "description": "Fetches a list of resources OR retrieves detailed data for a specific resource. If 'resourceName' is omitted, it returns a list. If 'resourceName' is provided, it returns details for that specific resource.",
+    "inputSchema": {
+      "dependentRequired": {
+        "resourceName": [
+          "namespaces"
+        ]
+      },
+      "properties": {
+        "clusterName": {
+          "description": "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig",
+          "type": "string"
+        },
+        "namespaces": {
+          "description": "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces.",
+          "type": "string"
+        },
+        "resourceName": {
+          "description": "Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource.",
+          "type": "string"
+        },
+        "resourceType": {
+          "description": "The type of resource to query.",
+          "enum": [
+            "app",
+            "namespace",
+            "service",
+            "workload"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "resourceType"
+      ],
+      "type": "object"
+    },
+    "name": "kiali_get_resource_details",
+    "title": "List or Resource Details"
   },
   {
     "annotations": {

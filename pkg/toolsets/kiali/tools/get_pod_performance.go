@@ -13,7 +13,7 @@ import (
 
 func InitGetPodPerformance() []api.ServerTool {
 	ret := make([]api.ServerTool, 0)
-	name := defaults.ToolsetName() + "_get_resource_details"
+	name := defaults.ToolsetName() + "_get_pod_performance"
 	ret = append(ret, api.ServerTool{
 		Tool: api.Tool{
 			Name:        name,

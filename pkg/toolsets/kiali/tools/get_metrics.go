@@ -74,7 +74,7 @@ func InitGetMetrics() []api.ServerTool {
 						Description: "Comma-separated list of labels to group metrics by (e.g., 'source_workload,destination_service'). Optional",
 					},
 				},
-				Required: []string{"resource_type", "namespace", "resource_name"},
+				Required: []string{"resourceType", "namespace", "resourceName"},
 			},
 			Annotations: api.ToolAnnotations{
 				Title:           "Get Metrics for a Resource",

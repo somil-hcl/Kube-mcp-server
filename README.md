@@ -463,9 +463,9 @@ In case multi-cluster support is enabled (default) and you have access to multip
   - `clusterName` (`string`) - Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig
   - `namespaces` (`string`) - Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces.
   - `resourceName` (`string`) - Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource.
-  - `resourceType` (`string`) - The type of resource to query.
+  - `resourceType` (`string`) **(required)** - The type of resource to query.
 
-- **kiali_get_resource_details** - Returns a human-readable text summary with current Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits (from the Pod spec). Useful to answer questions like 'Is this workload using too much memory?'
+- **kiali_get_pod_performance** - Returns a human-readable text summary with current Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits (from the Pod spec). Useful to answer questions like 'Is this workload using too much memory?'
   - `clusterName` (`string`) - Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig
   - `namespace` (`string`) **(required)** - Kubernetes namespace of the Pod.
   - `podName` (`string`) - Kubernetes Pod name. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first.
@@ -503,8 +503,8 @@ In case multi-cluster support is enabled (default) and you have access to multip
   - `rateInterval` (`string`) - Rate interval for metrics (e.g., '1m', '5m'). Optional, defaults to '10m'
   - `reporter` (`string`) - Metrics reporter. Optional, defaults to 'source'
   - `requestProtocol` (`string`) - Filter by request protocol (e.g., 'http', 'grpc', 'tcp'). Optional
-  - `resourceName` (`string`) - Name of the resource to get metrics for
-  - `resourceType` (`string`) - Type of resource to get metrics
+  - `resourceName` (`string`) **(required)** - Name of the resource to get metrics for
+  - `resourceType` (`string`) **(required)** - Type of resource to get metrics
   - `step` (`string`) - Step between data points in seconds (e.g., '15'). Optional, defaults to 15 seconds
 
 </details>

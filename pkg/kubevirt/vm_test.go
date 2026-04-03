@@ -29,39 +29,123 @@ func createTestVM(name, namespace string, runStrategy RunStrategy) *unstructured
 
 func TestStartVM(t *testing.T) {
 	tests := []struct {
-		name          string
-		initialVM     *unstructured.Unstructured
-		wantStarted   bool
-		wantError     bool
-		errorContains string
+		name            string
+		runPolicy       RunPolicy
+		initialVM       *unstructured.Unstructured
+		wantStarted     bool
+		wantRunStrategy RunStrategy
+		wantError       bool
+		errorContains   string
 	}{
+		// HighAvailability policy tests
 		{
-			name:        "Start VM that is Halted",
-			initialVM:   createTestVM("test-vm", "default", RunStrategyHalted),
-			wantStarted: true,
-			wantError:   false,
+			name:            "HighAvailability: Start halted VM",
+			runPolicy:       RunPolicyHighAvailability,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyHalted),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyAlways,
 		},
 		{
-			name:        "Start VM that is already running (Always)",
-			initialVM:   createTestVM("test-vm", "default", RunStrategyAlways),
-			wantStarted: false,
-			wantError:   false,
+			name:            "HighAvailability: VM already running with Always",
+			runPolicy:       RunPolicyHighAvailability,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyAlways),
+			wantStarted:     false,
+			wantRunStrategy: RunStrategyAlways,
 		},
 		{
-			name: "Start VM without runStrategy",
-			initialVM: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "kubevirt.io/v1",
-					"kind":       "VirtualMachine",
-					"metadata": map[string]interface{}{
-						"name":      "test-vm",
-						"namespace": "default",
-					},
-					"spec": map[string]interface{}{},
-				},
-			},
-			wantStarted: true,
-			wantError:   false,
+			name:            "HighAvailability: Change from RerunOnFailure to Always",
+			runPolicy:       RunPolicyHighAvailability,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyRerunOnFailure),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyAlways,
+		},
+		{
+			name:            "HighAvailability: Change from Once to Always",
+			runPolicy:       RunPolicyHighAvailability,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyOnce),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyAlways,
+		},
+		{
+			name:            "HighAvailability: Change from Manual to Always",
+			runPolicy:       RunPolicyHighAvailability,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyManual),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyAlways,
+		},
+
+		// RestartOnFailure policy tests
+		{
+			name:            "RestartOnFailure: Start halted VM",
+			runPolicy:       RunPolicyRestartOnFailure,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyHalted),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyRerunOnFailure,
+		},
+		{
+			name:            "RestartOnFailure: VM already running with RerunOnFailure",
+			runPolicy:       RunPolicyRestartOnFailure,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyRerunOnFailure),
+			wantStarted:     false,
+			wantRunStrategy: RunStrategyRerunOnFailure,
+		},
+		{
+			name:            "RestartOnFailure: Change from Always to RerunOnFailure",
+			runPolicy:       RunPolicyRestartOnFailure,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyAlways),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyRerunOnFailure,
+		},
+		{
+			name:            "RestartOnFailure: Change from Once to RerunOnFailure",
+			runPolicy:       RunPolicyRestartOnFailure,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyOnce),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyRerunOnFailure,
+		},
+		{
+			name:            "RestartOnFailure: Change from Manual to RerunOnFailure",
+			runPolicy:       RunPolicyRestartOnFailure,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyManual),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyRerunOnFailure,
+		},
+
+		// Once policy tests
+		{
+			name:            "Once: Start halted VM",
+			runPolicy:       RunPolicyOnce,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyHalted),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyOnce,
+		},
+		{
+			name:            "Once: VM already running with Once",
+			runPolicy:       RunPolicyOnce,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyOnce),
+			wantStarted:     false,
+			wantRunStrategy: RunStrategyOnce,
+		},
+		{
+			name:            "Once: Change from Always to Once",
+			runPolicy:       RunPolicyOnce,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyAlways),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyOnce,
+		},
+		{
+			name:            "Once: Change from RerunOnFailure to Once",
+			runPolicy:       RunPolicyOnce,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyRerunOnFailure),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyOnce,
+		},
+		{
+			name:            "Once: Change from Manual to Once",
+			runPolicy:       RunPolicyOnce,
+			initialVM:       createTestVM("test-vm", "default", RunStrategyManual),
+			wantStarted:     true,
+			wantRunStrategy: RunStrategyOnce,
 		},
 	}
 
@@ -71,7 +155,7 @@ func TestStartVM(t *testing.T) {
 			client := fake.NewSimpleDynamicClient(scheme, tt.initialVM)
 			ctx := context.Background()
 
-			vm, wasStarted, err := StartVM(ctx, client, tt.initialVM.GetNamespace(), tt.initialVM.GetName())
+			vm, wasStarted, err := StartVM(ctx, client, tt.initialVM.GetNamespace(), tt.initialVM.GetName(), tt.runPolicy)
 
 			if tt.wantError {
 				if err == nil {
@@ -98,7 +182,7 @@ func TestStartVM(t *testing.T) {
 				t.Errorf("wasStarted = %v, want %v", wasStarted, tt.wantStarted)
 			}
 
-			// Verify the VM's runStrategy is Always
+			// Verify the VM's runStrategy matches expected
 			strategy, found, err := GetVMRunStrategy(vm)
 			if err != nil {
 				t.Errorf("Failed to get runStrategy: %v", err)
@@ -108,8 +192,8 @@ func TestStartVM(t *testing.T) {
 				t.Errorf("runStrategy not found")
 				return
 			}
-			if strategy != RunStrategyAlways {
-				t.Errorf("Strategy = %q, want %q", strategy, RunStrategyAlways)
+			if strategy != tt.wantRunStrategy {
+				t.Errorf("Strategy = %q, want %q", strategy, tt.wantRunStrategy)
 			}
 		})
 	}
@@ -120,7 +204,7 @@ func TestStartVMNotFound(t *testing.T) {
 	client := fake.NewSimpleDynamicClient(scheme)
 	ctx := context.Background()
 
-	_, _, err := StartVM(ctx, client, "default", "non-existent-vm")
+	_, _, err := StartVM(ctx, client, "default", "non-existent-vm", RunPolicyHighAvailability)
 	if err == nil {
 		t.Errorf("Expected error for non-existent VM, got nil")
 		return
@@ -325,5 +409,43 @@ func TestRestartVMNotFound(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "failed to get VirtualMachine") {
 		t.Errorf("Error = %v, want to contain 'failed to get VirtualMachine'", err)
+	}
+}
+
+func TestGetRunStrategyFromRunPolicy(t *testing.T) {
+	tests := []struct {
+		name            string
+		runPolicy       RunPolicy
+		wantRunStrategy RunStrategy
+	}{
+		{
+			name:            "HighAvailability maps to Always",
+			runPolicy:       RunPolicyHighAvailability,
+			wantRunStrategy: RunStrategyAlways,
+		},
+		{
+			name:            "RestartOnFailure maps to RerunOnFailure",
+			runPolicy:       RunPolicyRestartOnFailure,
+			wantRunStrategy: RunStrategyRerunOnFailure,
+		},
+		{
+			name:            "Once maps to Once",
+			runPolicy:       RunPolicyOnce,
+			wantRunStrategy: RunStrategyOnce,
+		},
+		{
+			name:            "Invalid policy defaults to Always",
+			runPolicy:       RunPolicy("invalid"),
+			wantRunStrategy: RunStrategyAlways,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getRunStrategyFromRunPolicy(tt.runPolicy)
+			if got != tt.wantRunStrategy {
+				t.Errorf("getRunStrategyFromRunPolicy(%q) = %q, want %q", tt.runPolicy, got, tt.wantRunStrategy)
+			}
+		})
 	}
 }

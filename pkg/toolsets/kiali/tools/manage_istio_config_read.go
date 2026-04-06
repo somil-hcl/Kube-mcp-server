@@ -50,6 +50,10 @@ func InitManageIstioConfigRead() []api.ServerTool {
 						Type:        "string",
 						Description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration.",
 					},
+					"serviceName": {
+						Type:        "string",
+						Description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action",
+					},
 				},
 				Required: []string{"action"},
 				DependentRequired: map[string][]string{

@@ -11,13 +11,13 @@ import (
 	"github.com/containers/kubernetes-mcp-server/pkg/toolsets/kiali/internal/defaults"
 )
 
-func InitGetTraces() []api.ServerTool {
+func InitGetTraceDetails() []api.ServerTool {
 	ret := make([]api.ServerTool, 0)
-	name := defaults.ToolsetName() + "_get_traces"
+	name := defaults.ToolsetName() + "_get_trace_details"
 	ret = append(ret, api.ServerTool{
 		Tool: api.Tool{
 			Name:        name,
-			Description: "Fetches a distributed trace (Jaeger/Tempo) by trace_id or searches by service_name (optionally only error traces) and summarizes bottlenecks and error spans.",
+			Description: "Fetches a single distributed trace by trace_id and returns its call hierarchy (service tree with duration, status, and nested calls). Use this after list_traces to drill into a specific trace.",
 			InputSchema: &jsonschema.Schema{
 				Type: "object",
 				Properties: map[string]*jsonschema.Schema{
@@ -25,42 +25,11 @@ func InitGetTraces() []api.ServerTool {
 						Type:        "string",
 						Description: "Trace ID to fetch and summarize. If provided, namespace/service_name are ignored.",
 					},
-					"namespace": {
-						Type:        "string",
-						Description: "Kubernetes namespace of the service (required when trace_id is not provided).",
-					},
-					"serviceName": {
-						Type:        "string",
-						Description: "Service name to search traces for (required when trace_id is not provided).",
-					},
-					"errorOnly": {
-						Type:        "boolean",
-						Description: "If true, only consider traces that contain errors (e.g. error=true / non-200 status). Default false.",
-					},
-					"clusterName": {
-						Type:        "string",
-						Description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration.",
-					},
-					"lookbackSeconds": {
-						Type:        "integer",
-						Description: "How far back to search when using service_name. Default 600 (10m).",
-						Default:     api.ToRawMessage(DefaultLookbackSeconds),
-					},
-					"limit": {
-						Type:        "integer",
-						Description: "Max number of traces to consider when searching by service_name. Default 10.",
-						Default:     api.ToRawMessage(DefaultLimit),
-					},
-					"maxSpans": {
-						Type:        "integer",
-						Description: "Max number of spans to return in each summary section (bottlenecks, errors, roots). Default 7.",
-						Default:     api.ToRawMessage(DefaultMaxSpans),
-					},
 				},
-				Required: []string{},
+				Required: []string{"traceId"},
 			},
 			Annotations: api.ToolAnnotations{
-				Title:           "Get Traces for a Resource or Trace Details",
+				Title:           "Get Trace Details",
 				ReadOnlyHint:    ptr.To(true),
 				DestructiveHint: ptr.To(false),
 				IdempotentHint:  ptr.To(true),
@@ -75,7 +44,7 @@ func InitGetTraces() []api.ServerTool {
 func tracesHandler(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
 	kiali := kialiclient.NewKiali(params, params.RESTConfig())
 	arguments := params.GetArguments()
-	content, err := kiali.ExecuteRequest(params.Context, KialiGetTracesEndpoint, arguments)
+	content, err := kiali.ExecuteRequest(params.Context, KialiGetTraceDetailsEndpoint, arguments)
 	if err != nil {
 		return api.NewToolCallResult("", fmt.Errorf("failed to retrieve traces: %w", err)), nil
 	}

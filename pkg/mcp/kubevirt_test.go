@@ -555,6 +555,102 @@ func (s *KubevirtSuite) TestVMLifecycle() {
 		})
 	})
 
+	s.Run("vm_lifecycle action=start with run_policy=RestartOnFailure", func() {
+		// First stop the VM
+		_, err := s.CallTool("vm_lifecycle", map[string]interface{}{
+			"name":      "test-vm-lifecycle",
+			"namespace": "default",
+			"action":    "stop",
+		})
+		s.Require().NoError(err)
+
+		toolResult, err := s.CallTool("vm_lifecycle", map[string]interface{}{
+			"name":       "test-vm-lifecycle",
+			"namespace":  "default",
+			"action":     "start",
+			"run_policy": "RestartOnFailure",
+		})
+		s.Run("no error", func() {
+			s.Nilf(err, "call tool failed %v", err)
+			s.Falsef(toolResult.IsError, "call tool failed")
+		})
+		var decodedResult []unstructured.Unstructured
+		err = yaml.Unmarshal([]byte(toolResult.Content[0].(*mcp.TextContent).Text), &decodedResult)
+		s.Run("returns yaml content with RerunOnFailure runStrategy", func() {
+			s.Nilf(err, "invalid tool result content %v", err)
+			s.Truef(strings.Contains(toolResult.Content[0].(*mcp.TextContent).Text, "RestartOnFailure"),
+				"Expected RestartOnFailure in message, got %v", toolResult.Content[0].(*mcp.TextContent).Text)
+			s.Require().Lenf(decodedResult, 1, "invalid resource count, expected 1, got %v", len(decodedResult))
+			s.Equal("RerunOnFailure",
+				decodedResult[0].Object["spec"].(map[string]interface{})["runStrategy"].(string),
+				"expected runStrategy to be RerunOnFailure with RestartOnFailure policy")
+		})
+	})
+
+	s.Run("vm_lifecycle action=start with run_policy=Once", func() {
+		// First stop the VM
+		_, err := s.CallTool("vm_lifecycle", map[string]interface{}{
+			"name":      "test-vm-lifecycle",
+			"namespace": "default",
+			"action":    "stop",
+		})
+		s.Require().NoError(err)
+
+		toolResult, err := s.CallTool("vm_lifecycle", map[string]interface{}{
+			"name":       "test-vm-lifecycle",
+			"namespace":  "default",
+			"action":     "start",
+			"run_policy": "Once",
+		})
+		s.Run("no error", func() {
+			s.Nilf(err, "call tool failed %v", err)
+			s.Falsef(toolResult.IsError, "call tool failed")
+		})
+		var decodedResult []unstructured.Unstructured
+		err = yaml.Unmarshal([]byte(toolResult.Content[0].(*mcp.TextContent).Text), &decodedResult)
+		s.Run("returns yaml content with Once runStrategy", func() {
+			s.Nilf(err, "invalid tool result content %v", err)
+			s.Truef(strings.Contains(toolResult.Content[0].(*mcp.TextContent).Text, "Once"),
+				"Expected Once in message, got %v", toolResult.Content[0].(*mcp.TextContent).Text)
+			s.Require().Lenf(decodedResult, 1, "invalid resource count, expected 1, got %v", len(decodedResult))
+			s.Equal("Once",
+				decodedResult[0].Object["spec"].(map[string]interface{})["runStrategy"].(string),
+				"expected runStrategy to be Once with Once policy")
+		})
+	})
+
+	s.Run("vm_lifecycle action=start with run_policy=HighAvailability (explicit)", func() {
+		// First stop the VM
+		_, err := s.CallTool("vm_lifecycle", map[string]interface{}{
+			"name":      "test-vm-lifecycle",
+			"namespace": "default",
+			"action":    "stop",
+		})
+		s.Require().NoError(err)
+
+		toolResult, err := s.CallTool("vm_lifecycle", map[string]interface{}{
+			"name":       "test-vm-lifecycle",
+			"namespace":  "default",
+			"action":     "start",
+			"run_policy": "HighAvailability",
+		})
+		s.Run("no error", func() {
+			s.Nilf(err, "call tool failed %v", err)
+			s.Falsef(toolResult.IsError, "call tool failed")
+		})
+		var decodedResult []unstructured.Unstructured
+		err = yaml.Unmarshal([]byte(toolResult.Content[0].(*mcp.TextContent).Text), &decodedResult)
+		s.Run("returns yaml content with Always runStrategy", func() {
+			s.Nilf(err, "invalid tool result content %v", err)
+			s.Truef(strings.Contains(toolResult.Content[0].(*mcp.TextContent).Text, "HighAvailability"),
+				"Expected HighAvailability in message, got %v", toolResult.Content[0].(*mcp.TextContent).Text)
+			s.Require().Lenf(decodedResult, 1, "invalid resource count, expected 1, got %v", len(decodedResult))
+			s.Equal("Always",
+				decodedResult[0].Object["spec"].(map[string]interface{})["runStrategy"].(string),
+				"expected runStrategy to be Always with HighAvailability policy")
+		})
+	})
+
 	s.Run("vm_lifecycle action=stop on running VM", func() {
 		toolResult, err := s.CallTool("vm_lifecycle", map[string]interface{}{
 			"name":      "test-vm-lifecycle",

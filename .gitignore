@@ -3,6 +3,7 @@ _output/
 .vscode/
 .docusaurus/
 node_modules/
+DEBIAN/
 
 .npmrc
 kubernetes-mcp-server
